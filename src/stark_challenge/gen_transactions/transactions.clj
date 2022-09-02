@@ -1,4 +1,15 @@
-(ns stark-challenge.gen-transactions.transactions)
+(ns stark-challenge.gen-transactions.transactions
+  (:require [stark-challenge.gen-transactions.helpers :as help]))
+
+(defn gen [amount id descr ext-id tags]
+  {:amount amount
+   :receiver-id (str id)
+   :description (str descr)
+   :external-id (str ext-id)
+   :tags tags})
+
+(comment
+  (gen 100 (help/random-id) "Some description" 12312 ["provider" "lucky"]))
 
 ;; Exemplary transaction
 ;; (def transactions

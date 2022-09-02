@@ -1,4 +1,4 @@
-(ns stark-challenge.project
+(ns stark-challenge.user
   (:require [starkbank.user :as su]))
 
 (defn strip [coll chars]
