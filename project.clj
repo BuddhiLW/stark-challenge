@@ -9,6 +9,7 @@
                  [org.clojure/math.numeric-tower "0.0.5"]
                  [ring/ring-core "1.9.5"]
                  [ring/ring-jetty-adapter "1.9.5"]
+                 [clj-time "0.15.2"]
                  [starkbank/sdk "2.5.2"]]
 
   :main ^:skip-aot stark-challenge.core

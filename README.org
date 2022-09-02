@@ -28,7 +28,6 @@ emulation environment will make sure some of those are automatically paid);
     f. account type: payment
 #+end_quote
 
-
 * API end-points
 ** Base URL:
 https://sandbox.api.starkbank.com
