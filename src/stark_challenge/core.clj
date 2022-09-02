@@ -1,12 +1,11 @@
 (ns stark-challenge.core
   (:require [ring.adapter.jetty :as j]
-            [starkbank.core :as stark])
-            ;; [ring.util.response :as resp])
+            [starkbank.key :as skey])
   (:gen-class))
 
-(def key-pair (stark/create "/sample/destination/path"))
-(println (:private-pem key-pair))
-(println (:public-pem key-pair))
+(def key-pair (skey/create "resources/keys/"))
+(def private-key (:private-key key-pair))
+(def public-key (:public-key key-pair))
 
 (defn handler [request]
   {:status 200
