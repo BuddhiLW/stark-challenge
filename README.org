@@ -1,0 +1,7 @@
+#+title: Stark Bank Challenge
+
+Create an =Integration= with [[https://starkbank.com/docs/api#introduction][Stark Bank API]].
+
+* API end-points
+** Base URL:
+https://sandbox.api.starkbank.com
