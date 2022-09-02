@@ -1,8 +1,8 @@
-(ns stark-challenge.gen-transactions.helpers)
-;;   (:require [clojure.math.numeric-tower :as math]))
+(ns stark-challenge.gen-transactions.helpers
+  (:require [clojure.math.numeric-tower :as math]))
 
-;; (defn random-id []
-;;   (math/round (rand (math/expt 10 16))))
+(defn random-id []
+  (math/round (rand (math/expt 10 16))))
 
 ;; Generate random transaction map
 (defn gen-trans-map [amount id descr ext-id tags]

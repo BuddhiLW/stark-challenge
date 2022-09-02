@@ -1,8 +1,7 @@
-(ns stark-challenge.gen-transactions.transactions
-  (:require [stark-challenge.gen-transactions.helpers :as help]
+(ns stark-challenge.gen-invoice.invoice
+  (:require [stark-challenge.gen-invoice.helpers :as help]
             [starkbank.transaction :as trans]
             [starkbank.invoice :as invoice]
-            ;; [starkbank.boleto :as boleto]
             [clj-time.local :as l]))
 
 (comment
