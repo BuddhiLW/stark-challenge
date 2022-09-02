@@ -44,3 +44,14 @@ Using =clojure.core/slurp=, we can catch the contents of the =privateKey.pem= fi
 (with-open [rdr (clojure.java.io/reader "resources/keys/privateKey.pem")]
   (reduce conj [] (line-seq rdr)))
 #+end_src
+* Setting up the project
+In =stark-challenge.core.clj=, we start the project, by setting up the user to =buddhilw=. The given parameters to the environment, e.i., =id=, =private-key=, etc have all been set at =stark-challenge.project=.
+
+#+begin_src clojure :eval no
+(sset/user proj-setup/buddhilw)
+;; => {:environment "sandbox",
+           ;;     :id <id>,
+           ;;     :private-key <private-key>,
+           ;;     :type "project"})
+           ;;
+#+end_src

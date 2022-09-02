@@ -1,11 +1,8 @@
 (ns stark-challenge.core
   (:require [ring.adapter.jetty :as j]
-            [starkbank.key :as skey])
+            [starkbank.settings :as sset]
+            [stark-challenge.project :as proj-setup])
   (:gen-class))
-
-(def key-pair (skey/create "resources/keys/"))
-(def private-key (:private-key key-pair))
-(def public-key (:public-key key-pair))
 
 (defn handler [request]
   {:status 200
@@ -14,4 +11,5 @@
 
 (defn -main
   [& args]
+  (sset/user proj-setup/buddhilw)
   (j/run-jetty handler {:port 3130}))
