@@ -1,6 +1,8 @@
 #+title: Stark Bank Challenge
 
-Create an =Integration= with [[https://starkbank.com/docs/api#introduction][Stark Bank API]].
+Project meant to create an =Integration= with the [[https://starkbank.com/docs/api#introduction][Stark Bank API]].
+
+We will be using the [[https://github.com/starkbank/sdk-clojure][Clojure API]].
 
 * API end-points
 ** Base URL:
