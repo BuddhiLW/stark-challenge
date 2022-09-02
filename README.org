@@ -32,3 +32,15 @@ emulation environment will make sure some of those are automatically paid);
 * API end-points
 ** Base URL:
 https://sandbox.api.starkbank.com
+
+* Using generated private-key
+
+Using =clojure.core/slurp=, we can catch the contents of the =privateKey.pem= file. For example, we could print it, to make sure we are catching meaning content.
+
+#+begin_src clojure :eval no
+(clojure.pprint/pprint (slurp "resources/keys/privateKey.pem"))
+(println (slurp "resources/keys/privateKey.pem"))
+
+(with-open [rdr (clojure.java.io/reader "resources/keys/privateKey.pem")]
+  (reduce conj [] (line-seq rdr)))
+#+end_src
