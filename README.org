@@ -80,14 +80,26 @@ The time must be formatted as used in =clj-time= library,
 
 This value can be used to generate a =invoice=.
 
-* Webhook with =ngrok=
-** Requirements
+* Webhooks
+** Resources
+|----------------+---------------------------|
+| Title          | Link                      |
+|----------------+---------------------------|
+| Using Web Hook | https://vimeo.com/4537957 |
+|----------------+---------------------------|
+
+#+begin_quote
+Pattern of anabling user-defined callbacks in web applications
+#+end_quote
+
+** Webhook with =ngrok=
+*** Requirements
 Required:
 - Have a registered account in =ngrok=;
 - Have configured ngrok cli;
   - Follow the ngrok dashboard =/get-started/setup= page.
 
-** Start port to localhost
+*** Start port to localhost
 #+begin_src shell
 ngrok http 80
 #+end_src
@@ -98,7 +110,7 @@ ngrok http 80
 
 Finally, copy the ngrok address.
 
-** DONE Hook =Invoice=
+*** DONE Hook =Invoice=
 CLOSED: [2022-09-02 sex 19:20]
 
 #+begin_src clojure :eval no

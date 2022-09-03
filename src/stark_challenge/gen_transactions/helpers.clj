@@ -4,6 +4,13 @@
 (defn random-id []
   (math/round (rand (math/expt 10 16))))
 
+(defn inst-timestamp []
+  (-> (drop-last 4 (str (jt/instant)))
+      (clojure.string/join)
+      (str "+00:00")))
+;; =>  "2022-09-03T20:54:53.360554+00:00"
+;;:due "2022-09-03T19:55:00.000000+00:00"
+
 ;; Generate random transaction map
 (defn gen-trans-map [amount id descr ext-id tags]
   {:amount amount

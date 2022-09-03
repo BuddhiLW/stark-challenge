@@ -7,9 +7,10 @@
 
   :dependencies [[org.clojure/clojure "1.11.1"]
                  [org.clojure/math.numeric-tower "0.0.5"]
+                 [org.clojure/data.json "2.4.0"]
                  [ring/ring-core "1.9.5"]
                  [ring/ring-jetty-adapter "1.9.5"]
-                 [clj-time "0.15.2"]
+                 [clojure.java-time "0.3.3"]
                  [starkbank/sdk "2.5.2"]]
 
   :main ^:skip-aot stark-challenge.core
