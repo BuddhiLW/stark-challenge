@@ -10,6 +10,7 @@
                  [org.clojure/data.json "2.4.0"]
                  [ring/ring-core "1.9.5"]
                  [ring/ring-jetty-adapter "1.9.5"]
+                 [eigenhombre/namejen "0.1.23"]
                  [clojure.java-time "0.3.3"]
                  [starkbank/sdk "2.5.2"]]
 

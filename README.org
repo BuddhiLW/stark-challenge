@@ -9,11 +9,9 @@ We will be using the [[https://github.com/starkbank/sdk-clojure][Clojure API]].
 Create a =Project= and =Webhook endpoint= for that account and develop a simple app integration using
 whichever language you prefer that:
 
-1. Issues 8 to 12 Invoices every 3 hours to random people for 24 hours (our Sandbox
-emulation environment will make sure some of those are automatically paid);
+1. Issues 8 to 12 Invoices every 3 hours to random people for 24 hours (our Sandbox emulation environment will make sure some of those are automatically paid);
 
-2. Receives the =webhook callback= of the Invoice credit and sends the received amount
-(minus eventual fees) to the following account using a Transfer:
+2. Receives the =webhook callback= of the Invoice credit and sends the received amount (minus eventual fees) to the following account using a Transfer:
 
     a. bank code: 20018183
 
@@ -27,6 +25,15 @@ emulation environment will make sure some of those are automatically paid);
 
     f. account type: payment
 #+end_quote
+* Logic
+** Random requests
+#+begin_quote
+1. Issues 8 to 12 Invoices every 3 hours to random people for 24 hours (our Sandbox emulation environment will make sure some of those are automatically paid);
+#+end_quote
+
+Each three hours, we must have something among $10 \pm 2$ invoices.
+
+We will sample a normal distribution of mean 10 and deviation 2. Following, we will generate random moments between the given instant, and three hours from then. Thus, doing that eight times, shifthing three hours each iteration, we cover the hole 24 hours, following the given distribution.
 
 * API end-points
 ** Base URL:

@@ -1,6 +1,9 @@
 (ns stark-challenge.gen-invoice.helpers
   (:require [clojure.math.numeric-tower :as math]
-            [java-time :as jt]))
+            [clojure.string :as str]
+            [clojure.set :as set]
+            [java-time :as jt]
+            [namejen.names :as names]))
 
 (comment
   ;; Our model
@@ -16,25 +19,143 @@
      :descriptions [{:key "Product Z"
                      :value "small"}]}]))
 
-(defn inst-timestamp
-  "Generates timestamp for current instant, complient to =:due= requested-format, on invoice/create."
-  []
-  (-> (drop-last 4 (str (jt/instant)))
+(defn due-timestamp
+  "Format timestamp for given time, complient to =:due= requested-format, on invoice/create."
+  [time]
+  (-> (drop-last 4 (str time))
       (clojure.string/join)
       (str "+00:00")))
 
-(defn r-tax-id []
+(comment (due-timestamp (jt/instant))
+         (jt/plus (jt/instant) (jt/hours 1)))
+         ;; => "2022-09-03T23:48:38.906757+00:00")
+
+(defn future-timestamp
+  "Generate timestamp for future due-date"
+  [start jt-future-minutes]
+  (jt/plus start jt-future-minutes))
+
+(defn r-min-max
+  "Generate a random value, between min and max - includes min and max"
+  [min max]
+  (let [M (* max 10)
+        r (rand max)]
+    (if (or (< r min) (> r M))
+      (r-min-max min max)
+      (math/round r))))
+
+(comment (r-min-max 8 12))
+
+(defn unique-random-numbers [n]
+  (let [a-set (set (take n (repeatedly #(rand-int n))))]
+    (concat a-set (set/difference (set (take n (range)))
+                                  a-set))))
+
+(comment (take 10 (unique-random-numbers 180))
+         (apply max (take 10 (unique-random-numbers 180))))
+
+(comment (map (partial future-timestamp (jt/instant))
+              (map jt/minutes (take 10 (unique-random-numbers 180)))))
+
+(defn gen-timestamps
+  "Take initial timestamp (init-ts), quantity and time-range.
+  Returns timestamps randomly generated through the timerange"
+  [init-ts quant trange]
+  (map (partial future-timestamp init-ts)
+       (map jt/minutes (take quant (unique-random-numbers trange)))))
+
+(comment (gen-timestamps (jt/instant) 10 180)
+         (map due-timestamp (gen-timestamps (jt/instant) 10 180)))
+
+(defn concatv
+  "Helper function: concatenate `xs` and return the result as a vector."
+  [& xs]
+  (into [] cat xs))
+
+(comment (concatv '(1 2) [3] [4 5]))
+
+(comment (count (concatv '(1 2) [3] [4 5])))
+
+(defn gen-twentyfour
+  "Generate due-dates for 24 hours of invoices-creation, starting at five minutes from when the function is called."
+  []
+  (loop [init-ts  (future-timestamp (jt/instant) (jt/minutes 5))
+         quantity (r-min-max 8 12)
+         trange   180
+         vals     []]
+    (if (> (count vals) 64) ;; => the minimum is 64 invoices in 24 hours (8 per 3 hours)
+      vals
+      (recur (future-timestamp init-ts (jt/minutes trange))
+             (r-min-max 8 12)
+             (identity trange)
+             (concatv vals (gen-timestamps init-ts quantity trange))))))
+
+(comment (count (map due-timestamp (gen-twentyfour))))
+
+(defn r-three-digits
+  "Generate three digits, randomly"
+  []
   (let [max (math/expt 10 3)
         r (rand max)]
     (if (< r (/ max 10))
-      (r-tax-id)
+      (r-three-digits)
       (math/round r))))
 
-(r-tax-id)
+(defn r-two-digits
+  "Generate two digits, randomly"
+  []
+  (let [max (math/expt 10 2)
+        r (rand max)]
+    (if (< r (/ max 10))
+      (r-two-digits)
+      (math/round r))))
+
+(defn r-id
+  "Generate an id, randomly"
+  []
+  (str (r-three-digits) "." (r-three-digits) "." (r-three-digits) "-" (r-two-digits)))
+
+(comment (r-id))
+         ;; => "839.960.517-45"
+
+(defn r-amount
+  "Generate a random amount between 2R$ and a max value (a value of 100 translates to 1R$)"
+  [max]
+  (r-min-max 200 max))
+
+(comment (names/name-maker))
+(defn r-exp []
+  (rand-int 1000))
+
+(defn r-fine []
+  (float (/ (rand-int 1000) 100)))
+
+(defn r-interest []
+  (float (/ (rand-int 500) 100)))
+
+(def alphabet ["A" "B" "C" "D" "E" "F" "G" "H" "I" "J" "K" "L" "M" "O" "P" "Q" "R" "S" "T" "U" "V" "W" "X" "Y" "Z"])
+(def descriptions ["Product" "Service" "Payment"])
+(comment (rand-nth alphabet))
+
+(defn r-key
+  []
+  (str  (rand-nth descriptions) " " (rand-nth alphabet) (r-two-digits)))
+
+(defn r-descr
+  [value]
+  (if (> value 100000)
+    "big"
+    "small"))
+
+(comment (r-min-max 1 5))
+;; (defn r-)
+
+;; {:key "Product Z"
+;;  :value "small"}
 
 ;; Generate invoice-map
 (defn gen-invoice-map
-  [amount due-datetime id name descr exp-time fine interest descr-vect-maps]
+  [amount due-datetime id name exp-time fine interest descr-vect-maps]
   {:tags ["scheduled"]
    :amount (float amount)
    :due (str due-datetime)
