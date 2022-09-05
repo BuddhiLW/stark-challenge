@@ -4,6 +4,29 @@ Project meant to create an =Integration= with the [[https://starkbank.com/docs/a
 
 We will be using the [[https://github.com/starkbank/sdk-clojure][Clojure API]].
 
+* Table of Contents :toc:
+- [[#specification][Specification]]
+- [[#logic][Logic]]
+  - [[#random-requests][Random requests]]
+- [[#api-end-points][API end-points]]
+  - [[#base-url][Base URL:]]
+- [[#using-generated-private-key][Using generated private-key]]
+- [[#setting-up-the-project][Setting up the project]]
+- [[#invoice-generation][Invoice generation]]
+  - [[#example-of-an-invoice][Example of an Invoice]]
+  - [[#amount-generation][Amount generation]]
+  - [[#time-generation][Time generation]]
+  - [[#tax-id-generation][Tax id generation]]
+  - [[#names-generation][Names generation]]
+  - [[#expiration-generation][Expiration generation]]
+  - [[#fine-generation][Fine generation]]
+  - [[#interest-generation][Interest generation]]
+  - [[#description-generation][Description generation]]
+  - [[#invoice-generation-1][Invoice generation]]
+- [[#webhooks][Webhooks]]
+  - [[#resources][Resources]]
+  - [[#webhook-with-ngrok][Webhook with =ngrok=]]
+
 * Specification
 #+begin_quote
 Create a =Project= and =Webhook endpoint= for that account and develop a simple app integration using
@@ -64,7 +87,7 @@ In =stark-challenge.core.clj=, we start the project, by setting up the user to =
 ;;
 #+end_src
 * Invoice generation
-Example of a Invoice,
+** Example of an Invoice
 #+begin_src clojure :eval no
 (def invoices (invoice/create
                  [{:tags ["immediate"]
@@ -79,14 +102,153 @@ Example of a Invoice,
                                    :value "big"}]}]))
 #+end_src
 
-The time must be formatted as used in =clj-time= library,
+** Amount generation
+Generates a random amount, and returns a =long= type, because it complies to the =:amount= key type.
 #+begin_src clojure :eval no
-(require '[clj-time.local :as l])
-(l/local-now)
+(defn r-amount
+  "Generate a random amount between 2R$ and a max value (a value of 100 translates to 1R$)"
+  [max]
+  (long (r-min-max 200 max)))
 #+end_src
 
-This value can be used to generate a =invoice=.
+** Time generation
+*** Formatter
+The time must be formatted as used in =clojure.java-time=
+#+begin_src clojure :eval no
+(require '[clojure.java-time :as jt])
 
+(defn due-timestamp
+  "Format timestamp for given time, complient to =:due= requested-format, on invoice/create."
+  [time]
+  (-> (drop-last 4 (str time))
+      (clojure.string/join)
+      (str "+00:00")))
+
+(due-timestamp (jt/instant))
+         ;; => "2022-09-05T14:34:32.884993+00:00"
+#+end_src
+
+The value returned from =due-timestamp= can be used to generate an =invoice=, passed to the =:due= key.
+*** Three hours span - generating timestamps
+This function generates 8 to 12 timestamps, which randomly are distributed through the span of three hours.
+
+The initial time considered is the current instant off-set by five minutes into the future.
+#+begin_src clojure :eval no
+;; ------- HELPER funtions -------
+(defn concatv
+  "Helper function: concatenate `xs` and return the result as a vector."
+  [& xs]
+  (into [] cat xs))
+
+(defn future-timestamp
+  "Generate timestamp for future due-date"
+  [start jt-future-minutes]
+  (jt/plus start jt-future-minutes))
+
+;; ------ MAIN function ------------
+(defn gen-three-hours
+  "Generate due-dates for 3 hours of invoices-creation, starting at five minutes from when the function is called."
+  []
+  (loop [init-ts  (future-timestamp (jt/instant) (jt/minutes 5))
+         quantity (r-min-max 8 12)
+         trange   180
+         vals     []]
+    (if (> (count vals) 8) ;; => the minimum is 64 invoices in 24 hours (8 per 3 hours)
+      vals
+      (recur (future-timestamp init-ts (jt/minutes trange))
+             (r-min-max 8 12)
+             (identity trange)
+             (concatv vals (gen-timestamps init-ts quantity trange))))))
+#+end_src
+** Tax id generation
+=cadatro-de-pessoa= library provides way of generating fictitious, but valid, =cnpj= and =cpf= values.
+
+#+begin_src clojure :eval no
+(require '[cadastro-de-pessoa.cnpj :as cnpj])
+(cnpj/gen)
+    ;; => "55.986.932/0406-02"
+#+end_src
+
+Finally, this can be passed to =:tax-id= key.
+
+** Names generation
+Using =namejen.names= library, we can generate random fake names, which look plausible real.
+#+begin_src clojure :eval no
+(require '[namejen.names :as names])
+(names/name-maker)
+    ;; => "Eita Ackye"
+#+end_src
+
+This is passed to the =:name= key.
+** Expiration generation
+We just pass a random integer, in the range of 1000.
+#+begin_src clojure :eval no
+(defn r-exp []
+  (rand-int 1000))
+#+end_src
+
+This is passed to the =:expiration= key.
+
+** Fine generation
+We take values that will be around 0.00 and 10.00, randomly.
+#+begin_src clojure :eval no
+(defn r-fine []
+  (float (/ (rand-int 1000) 100)))
+#+end_src
+
+This value is passed to =:fine= key.
+** Interest generation
+We take values that will be around 0.00 and 5.00, randomly.
+#+begin_src clojure :eval no
+(defn r-interest []
+  (float (/ (rand-int 500) 100)))
+#+end_src
+
+This value is passed to =:interest= key.
+** Description generation
+The =descriptions= key is a data-structure a little more complicate. We used the following home-coocked algorithm to generate it.
+
+#+begin_src clojure :eval no
+(def alphabet ["A" "B" "C" "D" "E" "F" "G" "H" "I" "J" "K" "L" "M" "O" "P" "Q" "R" "S" "T" "U" "V" "W" "X" "Y" "Z"])
+(def descriptions ["Product" "Service" "Payment"])
+
+(defn r-two-digits
+  "Generate two digits, randomly"
+  []
+  (let [max (math/expt 10 2)
+        r (rand max)]
+    (if (< r (/ max 10))
+      (r-two-digits)
+      (math/round r))))
+
+(defn r-descr-key
+  []
+  (str  (rand-nth descriptions)
+        " "
+        (rand-nth alphabet)
+        (r-two-digits)))
+
+(defn r-descr-val
+  [value]
+  (if (> value 100000)
+    "big"
+    "small"))
+
+(defn r-descr-map
+  [value]
+  {:key (r-descr-key)
+   :value (r-descr-val value)})
+
+(comment (r-descr-map 10000)
+         ;; => {:key "Product P99", :value "small"}
+         ;; => {:key "Product J13", :value "small"}
+         ;; => {:key "Product I72", :value "small"}
+         (r-descr-map 1000000))
+         ;; => {:key "Service S38", :value "big"}
+         ;; => {:key "Payment U98", :value "big"}
+         ;; => {:key "Payment O20", :value "big"}
+#+end_src
+** Invoice generation
 * Webhooks
 ** Resources
 |----------------+---------------------------|

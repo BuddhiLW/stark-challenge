@@ -3,7 +3,8 @@
             [clojure.string :as str]
             [clojure.set :as set]
             [java-time :as jt]
-            [namejen.names :as names]))
+            [namejen.names :as names]
+            [cadastro-de-pessoa.cnpj :as cnpj]))
 
 (comment
   ;; Our model
@@ -27,6 +28,7 @@
       (str "+00:00")))
 
 (comment (due-timestamp (jt/instant))
+         ;; => "2022-09-05T14:34:32.884993+00:00"
          (jt/plus (jt/instant) (jt/hours 1)))
          ;; => "2022-09-03T23:48:38.906757+00:00")
 
@@ -44,7 +46,9 @@
       (r-min-max min max)
       (math/round r))))
 
-(comment (r-min-max 8 12))
+(comment
+  (rand-int 100)
+  (r-min-max 8 12))
 
 (defn unique-random-numbers [n]
   (let [a-set (set (take n (repeatedly #(rand-int n))))]
@@ -92,14 +96,17 @@
 
 (comment (count (map due-timestamp (gen-twentyfour))))
 
-(defn r-three-digits
-  "Generate three digits, randomly"
-  []
-  (let [max (math/expt 10 3)
-        r (rand max)]
-    (if (< r (/ max 10))
-      (r-three-digits)
-      (math/round r))))
+(comment
+  "This does not generate a valid id, most of the time.
+   We will use the =cadatro-de-pessoa= library, instead."
+  (defn r-three-digits
+    "Generate three digits, randomly"
+    []
+    (let [max (math/expt 10 3)
+          r (rand max)]
+      (if (< r (/ max 10))
+        (r-three-digits)
+        (math/round r)))))
 
 (defn r-two-digits
   "Generate two digits, randomly"
@@ -110,18 +117,19 @@
       (r-two-digits)
       (math/round r))))
 
-(defn r-id
-  "Generate an id, randomly"
-  []
-  (str (r-three-digits) "." (r-three-digits) "." (r-three-digits) "-" (r-two-digits)))
+(comment
+  (defn r-id
+    "Generate an id, randomly"
+    []
+    (str (r-three-digits) "." (r-three-digits) "." (r-three-digits) "-" (r-two-digits)))
 
-(comment (r-id))
-         ;; => "839.960.517-45"
+  (r-id))
+    ;; => "839.960.517-45"
 
 (defn r-amount
   "Generate a random amount between 2R$ and a max value (a value of 100 translates to 1R$)"
   [max]
-  (r-min-max 200 max))
+  (long (r-min-max 200 max)))
 
 (comment (names/name-maker))
 (defn r-exp []
@@ -137,31 +145,98 @@
 (def descriptions ["Product" "Service" "Payment"])
 (comment (rand-nth alphabet))
 
-(defn r-key
+(defn r-descr-key
   []
   (str  (rand-nth descriptions) " " (rand-nth alphabet) (r-two-digits)))
 
-(defn r-descr
+(defn r-descr-val
   [value]
   (if (> value 100000)
     "big"
     "small"))
 
-(comment (r-min-max 1 5))
+(defn r-descr-map
+  [value]
+  {:key (r-descr-key)
+   :value (r-descr-val value)})
+
+(comment (r-descr-map 10000))
+         ;; => Syntax error compiling at (src/stark_challenge/gen_invoice/helpers.clj:162:10).
+         ;;    Unable to resolve symbol: r-descr-map in this context)
 ;; (defn r-)
 
 ;; {:key "Product Z"
 ;;  :value "small"}
+(def descr-ex
+  [{:key "Product Z"
+    :value "small"}])
+
+(defn gen-three-hours
+  "Generate due-dates for 3 hours of invoices-creation, starting at five minutes from when the function is called."
+  []
+  (loop [init-ts  (future-timestamp (jt/instant) (jt/minutes 5))
+         quantity (r-min-max 8 12)
+         trange   180
+         vals     []]
+    (if (> (count vals) 8) ;; => the minimum is 64 invoices in 24 hours (8 per 3 hours)
+      vals
+      (recur (future-timestamp init-ts (jt/minutes trange))
+             (r-min-max 8 12)
+             (identity trange)
+             (concatv vals (gen-timestamps init-ts quantity trange))))))
+
+(comment (map due-timestamp (gen-three-hours))
+         (println descr-ex))
 
 ;; Generate invoice-map
+(comment "The =gen-invoice-map= function must comply to the following.
+          This function can be found on the implementation of
+          =clojure-to-java=, used in =starkbank.invoice/create=."
+         #_(defn- clojure-to-java
+             ([clojure-map]
+              (let [{amount "amount"
+                     name "name"
+                     tax-id "tax-id"
+                     due "due"
+                     expiration "expiration"
+                     fine "fine"
+                     interest "interest"
+                     discounts "discounts"
+                     tags "tags"
+                     descriptions "descriptions"}
+                    (stringify-keys clojure-map)]
+
+                (defn- apply-java-hashmap [x] (java.util.HashMap. x))
+
+                (Invoice. (java.util.HashMap.
+                           {"amount" (if (nil? amount) nil (Long. amount))
+                            "name" name
+                            "taxId" tax-id
+                            "due" due
+                            "expiration" (if (nil? expiration) nil (Long. expiration))
+                            "fine" (if (nil? fine) nil (double fine))
+                            "interest" (if (nil? interest) nil (double interest))
+                            "discounts" (if (nil? discounts) nil (java.util.ArrayList. (map apply-java-hashmap discounts)))
+                            "tags" (if (nil? tags) nil (into-array String tags))
+                            "descriptions" (if (nil? descriptions) nil (java.util.ArrayList. (map clojure-descriptions-to-java descriptions)))}))))))
+
 (defn gen-invoice-map
   [amount due-datetime id name exp-time fine interest descr-vect-maps]
   {:tags ["scheduled"]
-   :amount (float amount)
+   :amount (long amount)
    :due (str due-datetime)
    :tax-id (str id)
    :name (str name)
-   :expiration (float exp-time)
-   :fine (float fine)
-   :interest (float interest)
+   :expiration (long exp-time)
+   :fine (double fine)
+   :interest (double interest)
    :descriptions descr-vect-maps})
+
+(comment (gen-invoice-map (r-amount 100000)
+                          (first (map due-timestamp (gen-three-hours)))
+                          (cnpj/gen)
+                          (names/name-maker)
+                          (r-exp)
+                          (r-fine)
+                          (r-interest)
+                          descr-ex))
