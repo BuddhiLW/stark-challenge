@@ -140,4 +140,6 @@
                     (help/r-exp)
                     (help/r-fine)
                     (help/r-interest)
-                    help/descr-ex)]))
+                    help/descr-ex)])
+  (clojure.pprint/pprint (gen-three-hours-invoices))
+  (count (gen-three-hours-invoices)))

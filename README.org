@@ -26,6 +26,7 @@ We will be using the [[https://github.com/starkbank/sdk-clojure][Clojure API]].
 - [[#webhooks][Webhooks]]
   - [[#resources][Resources]]
   - [[#webhook-with-ngrok][Webhook with =ngrok=]]
+  - [[#webhook-with-request-bin][Webhook with =request-bin=]]
 
 * Specification
 #+begin_quote
@@ -249,6 +250,81 @@ The =descriptions= key is a data-structure a little more complicate. We used the
          ;; => {:key "Payment O20", :value "big"}
 #+end_src
 ** Invoice generation
+
+This function relies on all previous helpers and the names-generator library, as well as cnpj-generator.
+
+The logic depends on looping through the timestamps (=ts=). For each timestamp we generate an =Invoice= map. Finally, =conj= this map into the results-vector (=vals=).
+
+When the timestamps list is emptied-out, we return all the map-values in the resulting vector.
+
+#+begin_src clojure :eval no
+(require '[stark-challenge.gen-invoice.helpers :as help])
+(require '[namejen.names :as names])
+(require '[cadastro-de-pessoa.cnpj :as cnpj])
+
+(defn gen-three-hours-invoices
+  "First the timestamps are generated and saved into =ts= (timestamps).
+   Then, we test if this list is empty. If it's not, we generate an invoice
+   with the first timestamp. If it's empty, we return the list of generated
+   invoices (maps).
+
+  Generate invoices in a range of three-hours."
+  []
+  (let [ts (map help/due-timestamp (help/gen-three-hours))]
+    (loop [t (first ts)
+           ts (rest ts)
+           amount (help/r-amount 1000000)
+           cnpj (cnpj/gen)
+           name (names/name-maker)
+           exp  (help/r-exp)
+           fine (help/r-fine)
+           inter (help/r-interest)
+           descr [(help/r-descr-map amount)]
+           vals []]
+      (if (empty? t)
+        vals
+        (recur (first ts)
+               (rest ts)
+               (help/r-amount 1000000)
+               (cnpj/gen)
+               (names/name-maker)
+               (help/r-exp)
+               (help/r-fine)
+               (help/r-interest)
+               [(help/r-descr-map amount)]
+               (conj vals (help/gen-invoice-map amount t cnpj name exp fine inter descr)))))))
+#+end_src
+
+*** Example
+#+begin_src clojure :eval no
+(gen-three-hours-invoices)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+[{:amount 994400,
+  :tags ["scheduled"],
+  :name "Aimie Oseph",
+  :expiration 383,
+  :tax-id "72.034.556/2003-89",
+  :due "2022-09-05T16:07:48.809261+00:00",
+  :interest 0.03999999910593033,
+  :fine 6.239999771118164,
+  :descriptions [{:key "Service D20", :value "big"}]}
+
+  (...)
+
+ {:amount 732935,
+  :tags ["scheduled"],
+  :name "Ms. Rlee Mothy Rolsky Arissa Rdad",
+  :expiration 571,
+  :tax-id "12.737.391/9287-07",
+  :due "2022-09-05T17:06:48.809261+00:00",
+  :interest 3.380000114440918,
+  :fine 9.890000343322754,
+  :descriptions [{:key "Product M69", :value "big"}]}]
+#+end_example
+
 * Webhooks
 ** Resources
 |----------------+---------------------------|
@@ -258,7 +334,7 @@ The =descriptions= key is a data-structure a little more complicate. We used the
 |----------------+---------------------------|
 
 #+begin_quote
-Pattern of anabling user-defined callbacks in web applications
+Pattern of enabling user-defined callbacks in web applications
 #+end_quote
 
 ** Webhook with =ngrok=
@@ -298,3 +374,48 @@ CLOSED: [2022-09-02 sex 19:20]
 ;; From sandbox: https://challenge447890.sandbox.starkbank.com/integration
 (swh/get "4834065156931584")
 #+end_src
+** Webhook with =request-bin=
+
+With the right permitions, we create a webhook to a generated url, given by [[https://pipedream.com/][RequestBin - A product by PipeDream]].
+
+#+begin_src clojure :eval no
+(ns stark-challenge.webhook.start
+  (:require [starkbank.webhook :as swh]))
+
+(def webhook
+  (swh/create
+   {:url "<RequestBin-URL>"
+    :subscriptions ["invoice"]}))
+#+end_src
+
+After generating invoices, we can see and inspect the data-structure and parse it in our server-setup. So, now we know we will be getting =POST= requests.
+
+#+ATTR_HTML: :width 1000px
+[[file:resources/img/request-bin.png][file:resources/img/request-bin.png]]
+
+And, these post-requests have the following structure:
+#+begin_example
+{"amount":64111,
+"brcode":"00020101021226890014br.gov.bcb.pix2567brcode-h.sandbox.starkinfra.com/v2/34c77f29b1064d529f80ed87c2f7f9ae5204000053039865802BR5925Stark Bank S.A. - Institu6009Sao Paulo62070503***630435DB",
+"created":"2022-09-04T22:43:07.990881+00:00",
+"descriptions":[{"key":"Product Z","value":"small"}],
+"discountAmount":0,
+"discounts":[],
+"due":"2022-09-04T22:48:07.464286+00:00",
+"expiration":724,
+"fee":0,
+"fine":6.559999942779541,
+"fineAmount":0,
+"id":"5487098693943296",
+"interest":2.759999990463257,
+"interestAmount":0,
+"link":"https://challenge447890.sandbox.starkbank.com/invoicelink/34c77f29b1064d529f80ed87c2f7f9ae",
+"name":"Cyrus",
+"nominalAmount":64111,
+"pdf":"https://sandbox.api.starkbank.com/v2/invoice/34c77f29b1064d529f80ed87c2f7f9ae.pdf",
+"status":"expired",
+"tags":["scheduled"],
+"taxId":"90.647.785/7623-59",
+"transactionIds":[],
+"updated":"2022-09-04T23:00:11.760299+00:00"}
+#+end_example
