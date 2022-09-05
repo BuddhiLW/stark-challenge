@@ -34,8 +34,8 @@
 
 (defn future-timestamp
   "Generate timestamp for future due-date"
-  [start jt-future-minutes]
-  (jt/plus start jt-future-minutes))
+  [jt-start jt-future-time]
+  (jt/plus jt-start jt-future-time))
 
 (defn r-min-max
   "Generate a random value, between min and max - includes min and max"
@@ -160,7 +160,7 @@
   {:key (r-descr-key)
    :value (r-descr-val value)})
 
-(comment (r-descr-map 10000))
+(comment (r-descr-map 1000000))
          ;; => Syntax error compiling at (src/stark_challenge/gen_invoice/helpers.clj:162:10).
          ;;    Unable to resolve symbol: r-descr-map in this context)
 ;; (defn r-)

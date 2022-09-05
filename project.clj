@@ -13,6 +13,7 @@
                  [eigenhombre/namejen "0.1.23"]
                  [clojure.java-time "0.3.3"]
                  [cadastro-de-pessoa "0.4.0"]
+                 [jarohen/chime "0.3.3"]
                  [starkbank/sdk "2.5.2"]]
 
   :main ^:skip-aot stark-challenge.core

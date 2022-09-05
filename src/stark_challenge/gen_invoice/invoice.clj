@@ -1,13 +1,12 @@
 (ns stark-challenge.gen-invoice.invoice
   (:require [stark-challenge.gen-invoice.helpers :as help]
-            [starkbank.transaction :as trans]
             [starkbank.invoice :as invoice]
             [namejen.names :as names]
-            [cadastro-de-pessoa.cnpj :as cnpj]))
+            [cadastro-de-pessoa.cnpj :as cnpj]
+            [chime.core :as chime]
+            [java-time :as jt]))
 
 (comment
-  (vector (help/gen-trans-map 100 (help/random-id) "Some description" 12312 ["provider" "lucky"]))
-  (trans/create (vector (help/gen-trans-map 100 5768064935133184 "Some description" 12312 ["provider" "lucky"])))
   ;; example
   (def invoices (invoice/create
                  [{:tags ["immediate"]
@@ -42,15 +41,15 @@
                     (help/r-fine)
                     (help/r-interest)
                     help/descr-ex)]))
-                   ;; => {:amount 81251,
-                   ;;     :tags ["scheduled"],
-                   ;;     :name "Tore Aura",
-                   ;;     :expiration 899,
-                   ;;     :tax-id "550.569.890-75",
-                   ;;     :due "2022-09-05T00:14:49.325439+00:00",
-                   ;;     :interest 3.76,
-                   ;;     :fine 0.7,
-                   ;;     :descriptions [{:key "Product Z", :value "small"}]}]))
+;; => {:amount 81251,
+;;     :tags ["scheduled"],
+;;     :name "Tore Aura",
+;;     :expiration 899,
+;;     :tax-id "550.569.890-75",
+;;     :due "2022-09-05T00:14:49.325439+00:00",
+;;     :interest 3.76,
+;;     :fine 0.7,
+;;     :descriptions [{:key "Product Z", :value "small"}]}]))
 
 (comment
   #_(defn gen-three-hours
@@ -143,3 +142,25 @@
                     help/descr-ex)])
   (clojure.pprint/pprint (gen-three-hours-invoices))
   (count (gen-three-hours-invoices)))
+
+(defn twentyfour-hours-three-apart
+  [inst-start]
+  (for [i (range 0 7)
+        :let [t (help/future-timestamp inst-start (jt/hours (* 3 i)))
+              vals []]]
+    (conj vals t)))
+
+(comment (clojure.pprint/pprint (vec (help/concatv (twentyfour-hours-three-apart (jt/instant))))))
+
+(defn scheduled-invoices []
+  (let [now (jt/instant)]
+    (chime/chime-at [(help/future-timestamp now (jt/seconds 5))
+                     (help/future-timestamp now (jt/hours 3))
+                     (help/future-timestamp now (jt/hours 6))
+                     (help/future-timestamp now (jt/hours 9))
+                     (help/future-timestamp now (jt/hours 12))
+                     (help/future-timestamp now (jt/hours 15))
+                     (help/future-timestamp now (jt/hours 18))
+                     (help/future-timestamp now (jt/hours 21))]
+                    (fn [_]
+                      (invoice/create (gen-three-hours-invoices))))))
