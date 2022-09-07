@@ -12,7 +12,7 @@ pom.xml.asc
 .hgignore
 .hg/
 
-# .lsp
+.lsp
 .clj-kondo
 
 sdk-clojure-2.5.2
