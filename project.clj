@@ -15,6 +15,7 @@
                  [metosin/muuntaja "0.6.8"]
                  [mount "0.1.16"]
                  [com.xtdb/xtdb-core "1.21.0"]
+                 [com.xtdb/xtdb-rocksdb "1.21.0"]
                  [eigenhombre/namejen "0.1.23"]
                  [clojure.java-time "0.3.3"]
                  [cadastro-de-pessoa "0.4.0"]
@@ -37,7 +38,7 @@
 
   :profiles
   {:uberjar {:aot :all
-                       :jvm-opts ["-Dclojure.compiler.direct-linking=true"]}})
+             :jvm-opts ["-Dclojure.compiler.direct-linking=true"]}})
 
    ;; :dev           [:project/dev :profiles/dev]
    ;; :test          [:project/dev :project/test :profiles/test]

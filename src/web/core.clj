@@ -5,16 +5,20 @@
             [muuntaja.core :as m]
             [aleph.http :as http]
             [mount.core :as mount]
-            [clojure.java.io :as io]))
+            [clojure.java.io :as io]
+            [database.core :as db]))
 
 (defn index-handler [_]
   {:body (slurp (io/resource "public/index.html"))})
 
 (defn create-handler
   [req]
-  (let [bg (:body-params req)]
-    (clojure.pprint/pprint bg)
-    {:body "body"}))
+  (let [bp (:body-params req)
+        tx (db/write bp)]
+    (clojure.pprint/pprint tx)
+    (clojure.pprint/pprint bp)
+    ;; (db/write bp)
+    {:body bp}))
 
 (def app
   (ring/ring-handler
