@@ -1,7 +1,7 @@
 (ns database.core
   (:require [xtdb.api :as xt]
-            [clojure.java.io :as io]
-            [mount.core :as mount]))
+            [mount.core :as mount])
+  (:gen-class))
 
 (mount/defstate node :start (xt/start-node {}))
 
@@ -45,4 +45,4 @@
    '{:find [?e]
      :where [[?e :id/id _]]}))
 
-(query)
+;; (query)

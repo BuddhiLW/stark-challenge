@@ -1,4 +1,4 @@
-(ns stark-challenge.gen-invoice.helpers
+(ns invoice.helpers
   (:require [clojure.math.numeric-tower :as math]
             [clojure.string :as str]
             [clojure.set :as set]

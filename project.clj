@@ -17,19 +17,30 @@
                  [com.xtdb/xtdb-core "1.21.0"]
                  [com.xtdb/xtdb-rocksdb "1.21.0"]
                  [eigenhombre/namejen "0.1.23"]
+                 [cheshire "5.11.0"]
+                 [http-kit "2.7.0-alpha1"]
+                 [org.clojure/core.async "1.5.648"]
                  [clojure.java-time "0.3.3"]
                  [cadastro-de-pessoa "0.4.0"]
                  [jarohen/chime "0.3.3"]
                  [starkbank/sdk "2.5.2"]]
 
-  :source-paths ["src/clj"]
-  :test-paths ["test/clj"]
+  :source-paths ["src"
+                 "src/web"
+                 "src/transfer"
+                 "src/invoice"
+                 "src/database"
+                 "src/scripting"
+                 "src/com"
+                 "src/com/chpill"
+                 "src/stark_challenge"]
+  ;; :test-paths ["test/clj"]
   :resource-paths ["resources"]
 
-  :main ^:skip-aot stark-challenge.core
+  ;; :main stark-challenge.core
   :target-path "target/%s"
-;;   :profiles {:uberjar {:aot :all
-;;                        :jvm-opts ["-Dclojure.compiler.direct-linking=true"]}})
+  ;; :profiles {:uberjar {:aot :all
+  ;;                      :jvm-opts ["-Dclojure.compiler.direct-linking=true"]}}
 ;; :uberjar {:omit-source true
 ;;              :aot :all
 ;;              :uberjar-name "starbank-challenge.jar"

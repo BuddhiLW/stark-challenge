@@ -1,4 +1,4 @@
-(ns stark-challenge.gen-key.keys
+(ns key.keys
   (:require [starkbank.key :as skey]))
 
 (def key-pair (skey/create "resources/keys/"))

@@ -1,4 +1,4 @@
-(ns stark-challenge.gen-invoice.tests
+(ns invoice.tests
   (:require [starkbank.event :as event]))
 
 (event/query

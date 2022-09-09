@@ -5,10 +5,12 @@
 (defn strip [coll chars]
   (apply str (remove #((set chars) %) coll)))
 
-(shell/sh "chmod" "a+rwx" "scripts/ngrok-gen.sh")
+;; (def stop-ngrok-process (ngrok/start {:port 8844 :protocol "http" :region "sa" :bin-path "ngrok"}))
+;; (System/getProperty "ngrok-tunnel-url")
 
-(def ngrok-url (-> (shell/sh "./scripts/ngrok-gen.sh")
-                   (:out)
-                   (strip "\n")))
-
-(comment (clojure.pprint/pprint ngrok-url))
+(defn -main
+  []
+  (def ngrok-url (-> (shell/sh "./scripts/ngrok-url.sh")
+                     (:out)
+                     (strip "\n")))
+  (clojure.pprint/pprint (str "ngrok url: " ngrok-url)))

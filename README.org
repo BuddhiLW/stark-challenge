@@ -6,6 +6,8 @@ We will be using the [[https://github.com/starkbank/sdk-clojure][Clojure API]].
 
 * Table of Contents :toc:
 - [[#specification][Specification]]
+- [[#how-to-use-the-application][How to use the application]]
+  - [[#steps][Steps]]
 - [[#logic][Logic]]
   - [[#random-requests][Random requests]]
 - [[#api-end-points][API end-points]]
@@ -49,6 +51,55 @@ whichever language you prefer that:
 
     f. account type: payment
 #+end_quote
+* How to use the application
+Using =cider=, =leiningen=, and =ngrok=,
+
+** Steps
+*** Start =ngrok= server
+Execute =ngrok-gen.sh=
+#+begin_src shell
+./scripts/ngrok-gen.sh
+#+end_src
+
+*** Start a =cider= session (you can use any editor and server)
+In Emacs, =M-x cider=, then choose =cider-jack-in-clj=.
+
+*** Eval =stark-challenge.core=
+Go to =src/stark-challenge/core.clj=.
+
+Evaluate the file, =M-x cider-eval-buffer= works.
+
+If any error is thrown about a file not being found in =classpath=, go to the given file and =M-x cider-eval-budder=. But, the project should work straight away, because =project.clj= is rightly setup:
+#+begin_src clojure :eval no
+;; ----- In =project.clj= file,
+  :source-paths ["src"
+                 "src/web"
+                 "src/transfer"
+                 "src/invoice"
+                 "src/database"
+                 "src/scripting"
+                 "src/com"
+                 "src/com/chpill"
+                 "src/stark_challenge"]
+#+end_src
+*** Finally, eval =stark-challenge.core/-main=
+So, you should eval this function:
+#+begin_src clojure :eval no
+(defn -main
+ [& args]
+ (sset/user proj-setup/buddhilw)
+ (server/-main)
+ (ngrok/-main)
+ (webhook/-main)
+ (ginv/scheduled-invoices))
+#+end_src
+
+Then, call it at the =REPL=:
+
+#+begin_src clojure :eval no
+(stark-challenge.core/-main)
+#+end_src
+
 * Logic
 ** Random requests
 #+begin_quote
